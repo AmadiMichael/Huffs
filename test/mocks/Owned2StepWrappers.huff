@@ -1,0 +1,22 @@
+///@dev For stand alone tests
+
+/// @dev To compile alone, use this (see abstract contract implementation below).
+/// @notice Main Function Dispatcher
+#define macro MAIN() = takes (0) returns (0) {
+
+  // get the function signature
+  0x00                          // [0x00]
+  calldataload                  // [calldata, 0x00]
+  0xe0                          // [0xe0, calldata, 0x00]
+  shr                           // [0x00000000000000000000000000000000000000000000000000000000(first4BytesOfCalldata), 0x00]
+
+  OWNED2STEP_MAIN()
+
+  0x00 0x00 revert
+}
+
+/// @dev To compile alone, use this (see abstract contract implementation below).
+// CONSTRUCTOR
+#define macro CONSTRUCTOR() = takes (0) returns (0) {
+  OWNED2STEP_CONSTRUCTOR()
+}
