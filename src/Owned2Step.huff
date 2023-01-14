@@ -1,0 +1,191 @@
+/// @title Owned2Step
+/// @notice SPDX-License-Identifier: MIT
+/// @author michaels <https://github.com/amadimichael>
+/// @notice A 2 step single owner authorization module
+/// @notice Adapted from <https://github.com/pentagonxyz/huffmate/blob/main/src/auth/Owned.huff>
+
+// Interface
+#define function transferOwnership(address) nonpayable returns ()
+#define function acceptOwnership() nonpayable returns ()
+#define function owner() nonpayable returns (address)
+#define function pendingOwner() nonpayable returns (address)
+
+// Events
+#define event OwnerUpdated(address indexed user, address indexed newOwner)
+#define event OwnershipTransferStarted(address indexed previousOwner, address indexed newOwner)
+
+// Errors
+#define error CallerIsNotOwner()
+#define error CallerIsNotNewOwner()
+
+// Storage Slots
+#define constant _OWNER = FREE_STORAGE_POINTER()                  // Slot 0
+#define constant _PENDING_OWNER = FREE_STORAGE_POINTER()          // Slot 1
+
+
+/// @notice Only Owner Modifier
+#define macro IS_OWNER() = takes (0) returns (0) {
+  caller                        // [msg.sender]
+  [_OWNER] sload                // [owner, msg.sender]
+  eq authed jumpi               // [authed]
+
+  // Revert otherwise
+  0x6db2465f00000000000000000000000000000000000000000000000000000000  // [sig]
+  0x00 mstore
+  0x04 0x00 revert
+
+  authed:
+}
+
+/// @notice Only Pending Owner Modifier
+#define macro IS_PENDING_OWNER() = takes (0) returns (0) {
+  caller                        // [msg.sender]
+  [_PENDING_OWNER] sload        // [pendingOwner, msg.sender]
+  eq authed jumpi               // [authed]
+
+  // Revert otherwise
+  0x825d63cf00000000000000000000000000000000000000000000000000000000  // [sig]
+  0x00 mstore
+  0x04 0x00 revert
+
+  authed:
+}
+
+/// @notice begins Transfer the Ownership
+/// @param {owner} [address] - The new owner
+#define macro TRANSFER_OWNERSHIP() = takes (0) returns (0) {
+  // Check that the caller is authorized
+  IS_OWNER()
+
+  // Set the new owner
+  0x04 calldataload                         // [pendingOwner]
+  dup1                                      // [pendingOwner, pendingOwner]
+  [_PENDING_OWNER] sstore                   // [pendingOwner]
+
+  // Emit the owner updated event
+  caller                                    // [from, pendingOwner]
+  __EVENT_HASH(OwnershipTransferStarted)    // [sig, from, pendingOwner]
+  0x00 0x00                                 // [0, 0, sig, from, pendingOwner]
+  log3                                      // []
+
+  stop
+}
+
+/// @notice Accept Ownership Transfer
+#define macro ACCEPT_OWNERSHIP() = takes (0) returns (0) {
+  // Check that the caller is pending owner
+  IS_PENDING_OWNER()
+
+  // delete pending owner
+  0x00                              // [0x00]
+  [_PENDING_OWNER] sstore           // []
+
+  // get old owner for event emission
+  [_OWNER] sload                    // [oldOwner]
+
+  // Set pending owner to be the new owner
+  caller                            // [newOwner, oldOwner]
+  [_OWNER] sstore                   // [oldOwner]
+
+  // Emit the owner updated event
+  caller                            // [newOwner, oldOwner]
+  swap1                             // [oldOwner, newOwner]
+  __EVENT_HASH(OwnerUpdated)        // [sig, oldOwner, newOwner]
+  0x00 0x00                         // [0, 0, sig, oldOwner, newOwner]
+  log3                              // []
+
+  stop
+}
+
+/// @notice Get the owner of the contract
+/// @return {owner} [address] - The owner of the contract
+#define macro OWNER() = takes (0) returns (0) {
+  [_OWNER] sload                    // [owner]
+  0x00 mstore                       // []
+  0x20 0x00 return
+}
+
+/// @notice Get the pending owner of the contract
+/// @return {pending owner} [address] - The pending owner of the contract
+#define macro PENDING_OWNER() = takes (0) returns (0) {
+  [_PENDING_OWNER] sload               // [Pendingowner]
+  0x00 mstore                          // []
+  0x20 0x00 return
+}
+
+
+/// @dev To inherit as an abstract contract.
+/// @notice CONSTRUCTOR
+#define macro OWNED2STEP_CONSTRUCTOR() = takes (0) returns (0) {
+  // Copy the owner into memory
+  0x20                        // [size] - byte size to copy
+  0x20 codesize sub           // [offset, size] - offset in the code to copy from
+  0x00                        // [mem, offset, size] - offset in memory to copy to
+  codecopy                    // []
+
+  // Set the new owner
+  0x00 mload                  // [owner]
+  dup1                        // [owner, owner]
+  [_OWNER]                    // [_OWNER, owner, owner]
+  sstore                      // [owner]
+
+  // Emit the owner updated event
+  0x00                        // [from, owner]
+  __EVENT_HASH(OwnerUpdated)  // [sig, from, owner]
+  0x00 0x00                   // [0, 0, sig, from, owner]
+  log3                        // []
+}
+
+
+
+/// @dev To inherit as an abstract contract, use this.
+/// @notice Main Function Dispatcher
+#define macro OWNED2STEP_MAIN() = takes (1) returns (1) {
+  // Input Stack: [function_selector]
+
+  dup1 __FUNC_SIG(transferOwnership) eq transfer_ownership jumpi    
+  dup1 __FUNC_SIG(acceptOwnership) eq accept_ownership jumpi
+  dup1 __FUNC_SIG(owner)    eq owner jumpi
+  dup1 __FUNC_SIG(pendingOwner) eq pending_owner jumpi
+
+  // Bubble up to parent macro
+  no_match jump
+
+  transfer_ownership:
+      TRANSFER_OWNERSHIP()
+  accept_ownership:
+      ACCEPT_OWNERSHIP()
+  owner:
+      OWNER()
+  pending_owner:
+      PENDING_OWNER()
+
+  no_match:
+}
+
+
+
+
+
+// ///@dev For stand alone tests
+
+// /// @dev To compile alone.
+// /// @notice Main Function Dispatcher
+// #define macro MAIN() = takes (0) returns (0) {
+
+//   // get the function signature
+//   0x00                          // [0x00]
+//   calldataload                  // [calldata, 0x00]
+//   0xe0                          // [0xe0, calldata, 0x00]
+//   shr                           // [0x00000000000000000000000000000000000000000000000000000000(first4BytesOfCalldata), 0x00]
+
+//   OWNED2STEP_MAIN()
+
+//   0x00 0x00 revert
+// }
+
+// /// @dev To compile alone.
+// // CONSTRUCTOR
+// #define macro CONSTRUCTOR() = takes (0) returns (0) {
+//   OWNED2STEP_CONSTRUCTOR()
+// }
