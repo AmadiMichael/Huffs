@@ -2,4 +2,4 @@
 
 Huff implementation of Ownable2Step by Openzeppelin
 
-NOTE: Unaudited, do not use in production.
+NOTE: Unaudited, for educational | fun purposes do not use in production.
