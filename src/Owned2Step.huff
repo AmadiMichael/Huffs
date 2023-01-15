@@ -55,7 +55,7 @@
 /// @param {owner} [address] - The new owner
 #define macro TRANSFER_OWNERSHIP() = takes (0) returns (0) {
   // Check that the caller is authorized
-  IS_OWNER()
+  IS_OWNER()                                // []
 
   // Set the new owner
   0x04 calldataload                         // [pendingOwner]
@@ -74,7 +74,7 @@
 /// @notice Accept Ownership Transfer
 #define macro ACCEPT_OWNERSHIP() = takes (0) returns (0) {
   // Check that the caller is pending owner
-  IS_PENDING_OWNER()
+  IS_PENDING_OWNER()                // []
 
   // delete pending owner
   0x00                              // [0x00]
@@ -141,7 +141,8 @@
 /// @dev To inherit as an abstract contract, use this.
 /// @notice Main Function Dispatcher
 #define macro OWNED2STEP_MAIN() = takes (1) returns (1) {
-  // Input Stack: [function_selector]
+  // Input Stack: [left_padded_function_selector]
+  // Return Stack: [left_padded_function_selector] can be popped off at the function's JUMPDEST
 
   dup1 __FUNC_SIG(transferOwnership) eq transfer_ownership jumpi    
   dup1 __FUNC_SIG(acceptOwnership) eq accept_ownership jumpi
@@ -172,20 +173,23 @@
 
 /// @dev To compile alone, use this (see abstract contract implementation below).
 /// @notice Main Function Dispatcher
-// #define macro MAIN() = takes (0) returns (0) {
-//   // get the function signature
-//   0x00                          // [0x00]
-//   calldataload                  // [calldata, 0x00]
-//   0xe0                          // [0xe0, calldata, 0x00]
-//   shr                           // [0x00000000000000000000000000000000000000000000000000000000(first4BytesOfCalldata), 0x00]
+#define macro MAIN() = takes (0) returns (0) {
+  // Doesn't return anything. 
+  // If inherited will return the left_padded_function_selector in the stack to the function
 
-//   OWNED2STEP_MAIN()
+  // get the function signature
+  0x00                          // [0x00]
+  calldataload                  // [calldata]
+  0xe0                          // [0xe0, calldata]
+  shr                           // [left_padded_function_selector]
 
-//   0x00 0x00 revert
-// }
+  OWNED2STEP_MAIN()             // [left_padded_function_selector]
+
+  0x00 0x00 revert
+}
 
 /// @dev To compile alone, use this (see abstract contract implementation below).
 /// @notice CONSTRUCTOR
-// #define macro CONSTRUCTOR() = takes (0) returns (0) {
-//   OWNED2STEP_CONSTRUCTOR()
-// }
+#define macro CONSTRUCTOR() = takes (0) returns (0) {
+  OWNED2STEP_CONSTRUCTOR()
+}
