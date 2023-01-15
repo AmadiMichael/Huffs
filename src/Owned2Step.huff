@@ -140,25 +140,28 @@
 
 /// @dev To inherit as an abstract contract, use this.
 /// @notice Main Function Dispatcher
-#define macro OWNED2STEP_MAIN() = takes (1) returns (1) {
+#define macro OWNED2STEP_MAIN() = takes (1) returns (0) {
   // Input Stack: [left_padded_function_selector]
-  // Return Stack: [left_padded_function_selector] can be popped off at the function's JUMPDEST
 
-  dup1 __FUNC_SIG(transferOwnership) eq transfer_ownership jumpi    
-  dup1 __FUNC_SIG(acceptOwnership) eq accept_ownership jumpi
-  dup1 __FUNC_SIG(owner)    eq owner jumpi
-  dup1 __FUNC_SIG(pendingOwner) eq pending_owner jumpi
+  dup1 __FUNC_SIG(transferOwnership) eq transfer_ownership jumpi  // [left_padded_function_selector]
+  dup1 __FUNC_SIG(acceptOwnership) eq accept_ownership jumpi      // [left_padded_function_selector]
+  dup1 __FUNC_SIG(owner)    eq owner jumpi                        // [left_padded_function_selector]
+  dup1 __FUNC_SIG(pendingOwner) eq pending_owner jumpi            // [left_padded_function_selector]
 
   // Bubble up to parent macro
   no_match jump
 
   transfer_ownership:
+      pop
       TRANSFER_OWNERSHIP()
   accept_ownership:
+      pop
       ACCEPT_OWNERSHIP()
   owner:
+      pop
       OWNER()
   pending_owner:
+      pop
       PENDING_OWNER()
 
   no_match:
@@ -175,7 +178,6 @@
 /// @notice Main Function Dispatcher
 #define macro MAIN() = takes (0) returns (0) {
   // Doesn't return anything. 
-  // If inherited will return the left_padded_function_selector in the stack to the function
 
   // get the function signature
   0x00                          // [0x00]
@@ -183,7 +185,7 @@
   0xe0                          // [0xe0, calldata]
   shr                           // [left_padded_function_selector]
 
-  OWNED2STEP_MAIN()             // [left_padded_function_selector]
+  OWNED2STEP_MAIN()             // []
 
   0x00 0x00 revert
 }
