@@ -6,7 +6,7 @@ import {HuffConfig} from "foundry-huff/HuffConfig.sol";
 import {HuffDeployer} from "foundry-huff/HuffDeployer.sol";
 import "forge-std/console.sol";
 
-interface Ownable2Step {
+interface Owned2Step {
     event OwnershipTransferStarted(
         address indexed previousOwner,
         address indexed newOwner
@@ -26,8 +26,8 @@ interface Ownable2Step {
     function pendingOwner() external view returns (address);
 }
 
-contract OwnedTest is Test {
-    Ownable2Step owner;
+contract Owned2StepTest is Test {
+    Owned2Step owned2Step;
     address constant OWNER = address(0x420);
 
     event OwnershipTransferStarted(
@@ -48,7 +48,7 @@ contract OwnedTest is Test {
             .with_args(abi.encode(OWNER));
         vm.expectEmit(true, true, true, true);
         emit OwnerUpdated(address(0), OWNER);
-        owner = Ownable2Step(config.deploy("Owned2Step"));
+        owned2Step = Owned2Step(config.deploy("Owned2Step"));
     }
 
     // @notice Test that a non-matching selector reverts
@@ -66,7 +66,7 @@ contract OwnedTest is Test {
             }
         }
 
-        address target = address(owner);
+        address target = address(owned2Step);
         bool success = false;
         assembly {
             mstore(0x80, callData)
@@ -79,55 +79,59 @@ contract OwnedTest is Test {
         assert(!success);
     }
 
+    /// @notice test that owner is equal to OWNER after deoloyment
     function testGetOwner() public {
-        assertEq(OWNER, owner.owner());
+        assertEq(OWNER, owned2Step.owner());
     }
 
+    /// @notice test that pending owner is equal to address 0 after deployment
     function testGetPendingOwner() public {
-        assertEq(address(0), owner.pendingOwner());
+        assertEq(address(0), owned2Step.pendingOwner());
     }
 
-    function testTransferOwnership(address new_owner) public {
+    /// @notice test that non-owner CANNOT transfer ownership
+    function testFailTransferOwnership(address new_owner) public {
         if (new_owner == OWNER) return;
         vm.startPrank(new_owner);
-        vm.expectRevert();
-        owner.transferOwnership(new_owner);
+        owned2Step.transferOwnership(new_owner);
         vm.stopPrank();
-        assertEq(OWNER, owner.owner());
-        assertEq(address(0), owner.pendingOwner());
+        assertEq(OWNER, owned2Step.owner());
+        assertEq(address(0), owned2Step.pendingOwner());
     }
 
+    /// @notice test that owner CAN transfer ownership
     function testOwnerCanTransferOwnership() public {
         address new_owner = address(0x50ca1);
         vm.startPrank(OWNER);
         vm.expectEmit(true, true, true, true);
         emit OwnershipTransferStarted(OWNER, new_owner);
-        owner.transferOwnership(new_owner);
+        owned2Step.transferOwnership(new_owner);
         vm.stopPrank();
-        assertEq(OWNER, owner.owner());
-        assertEq(new_owner, owner.pendingOwner());
+        assertEq(OWNER, owned2Step.owner());
+        assertEq(new_owner, owned2Step.pendingOwner());
     }
 
-    function testAcceptOwnership(address pending_owner) public {
+    /// @notice test that non-pendingOwner CANNOT transfer ownership
+    function testFailAcceptOwnership(address pending_owner) public {
         testOwnerCanTransferOwnership();
         if (pending_owner == address(0x50ca1)) return;
         vm.startPrank(pending_owner);
-        vm.expectRevert();
-        owner.acceptOwnership();
+        owned2Step.acceptOwnership();
         vm.stopPrank();
-        assertEq(OWNER, owner.owner());
-        assertEq(address(0x50ca1), owner.pendingOwner());
+        assertEq(OWNER, owned2Step.owner());
+        assertEq(address(0x50ca1), owned2Step.pendingOwner());
     }
 
+    /// @notice test that pendingOwner CAN transfer ownership
     function testPendingOwnerCanAcceptOwnership() public {
         testOwnerCanTransferOwnership();
         address new_owner = address(0x50ca1);
         vm.startPrank(new_owner);
         vm.expectEmit(true, true, true, true);
         emit OwnerUpdated(OWNER, new_owner);
-        owner.acceptOwnership();
+        owned2Step.acceptOwnership();
         vm.stopPrank();
-        assertEq(new_owner, owner.owner());
-        assertEq(address(0), owner.pendingOwner());
+        assertEq(new_owner, owned2Step.owner());
+        assertEq(address(0), owned2Step.pendingOwner());
     }
 }
