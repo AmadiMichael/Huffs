@@ -91,7 +91,7 @@ contract Owned2StepTest is Test {
 
     /// @notice test that non-owner CANNOT transfer ownership
     function testFailTransferOwnership(address new_owner) public {
-        if (new_owner == OWNER) return;
+        if (new_owner == OWNER) revert();
         vm.startPrank(new_owner);
         owned2Step.transferOwnership(new_owner);
         vm.stopPrank();
@@ -114,7 +114,7 @@ contract Owned2StepTest is Test {
     /// @notice test that non-pendingOwner CANNOT transfer ownership
     function testFailAcceptOwnership(address pending_owner) public {
         testOwnerCanTransferOwnership();
-        if (pending_owner == address(0x50ca1)) return;
+        if (pending_owner == address(0x50ca1)) revert();
         vm.startPrank(pending_owner);
         owned2Step.acceptOwnership();
         vm.stopPrank();
