@@ -1,0 +1,17 @@
+/// @dev For stand alone tests
+
+/// @dev To compile alone, use this (see abstract contract implementation below).
+/// @notice Main Function Dispatcher
+#define macro MAIN() = takes (0) returns (0) {
+  // Doesn't return anything. 
+
+  // get the function signature
+  0x00                          // [0x00]
+  calldataload                  // [calldata]
+  0xe0                          // [0xe0, calldata]
+  shr                           // [left_padded_function_selector]
+
+  BITMAP_MAIN()                 // []
+
+  0x00 0x00 revert
+}
