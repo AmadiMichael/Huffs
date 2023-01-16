@@ -1,3 +1,9 @@
+/// @title BitMath
+/// @notice SPDX-License-Identifier: MIT
+/// @author michaels <https://github.com/amadimichael>
+/// @notice This library provides functionality for computing bit properties of an unsigned integer. 
+/// @notice Adapted from <https://github.com/Uniswap/v3-core/blob/main/contracts/libraries/BitMath.sol>
+
 // interface
 #define function mostSignificantBit(uint256) nonpayable returns (uint8)
 #define function leastSignificantBit(uint256) nonpayable returns (uint8)
@@ -22,107 +28,112 @@
     no_match:
 }
 
+
+/// @notice Returns the index of the most significant bit of the number,
+///     where the least significant bit is at index 0 and the most significant bit is at index 255
+/// @return r the index of the most significant bit
 #define macro MOST_SIGNIFICANT_BIT() = takes(0) returns(0) {
-    // lets call the input x
+    // lets call the input data `x`
 
     // load x
-    0x04 calldataload                   // [x]
+    0x04 calldataload                                           // [x]
 
     // require x is greater than 0
-    dup1 0x00                 // [0x00, x, x]
-    eq revert_if_zero jumpi             // [x]
+    dup1 0x00                                                   // [0x00, x, x]
+    eq revert_if_zero jumpi                                     // [x]
 
     // if (x >= 0x100000000000000000000000000000000)
-    dup1                                            // [x, x]
-    0x100000000000000000000000000000000             // [0x100000000000000000000000000000000, x, x]
-    gt check_0x10000000000000000 jumpi    // [x]
+    dup1                                                        // [x, x]
+    0x100000000000000000000000000000000                         // [0x100000000000000000000000000000000, x, x]
+    gt check_0x10000000000000000 jumpi                          // [x]
 
-    0x80 shr    // [x]
-    0x80 0x00 mstore // return value  (added after each shift left)     // [x]
+    0x80 shr                                                    // [x]
+    // return value  (added after each shift left)
+    0x80 0x00 mstore                                            // [x]
 
     check_0x10000000000000000:
             // if (x >= 0x10000000000000000)
-            dup1                                            // [x, x]
-            0x10000000000000000             // [0x10000000000000000, x, x]
-            gt check_0x100000000 jumpi    // [x]
+            dup1                                                // [x, x]
+            0x10000000000000000                                 // [0x10000000000000000, x, x]
+            gt check_0x100000000 jumpi                          // [x]
 
-            0x40 shr    // [x]
+            0x40 shr                                            // [x]
             
-            0x00 mload  // [r, x]
-            0x40 add    // [newR, x]
-            0x00 mstore // [x]
+            0x00 mload                                          // [r, x]
+            0x40 add                                            // [newR, x]
+            0x00 mstore                                         // [x]
             
 
     check_0x100000000:
             // if (x >= 0x100000000)
-            dup1                                            // [x, x]
-            0x100000000             // [0x100000000, x, x]
-            gt check_0x10000 jumpi    // [x]
+            dup1                                                // [x, x]
+            0x100000000                                         // [0x100000000, x, x]
+            gt check_0x10000 jumpi                              // [x]
             
-            0x20 shr    // [x]
+            0x20 shr                                            // [x]
 
-            0x00 mload  // [r, x]
-            0x20 add    // [newR, x]
-            0x00 mstore // [x]
+            0x00 mload                                          // [r, x]
+            0x20 add                                            // [newR, x]
+            0x00 mstore                                         // [x]
 
     check_0x10000:
             // if (x >= 0x10000)
-            dup1                                            // [x, x]
-            0x10000             // [0x10000, x, x]
-            gt check_0x100 jumpi    // [x]
+            dup1                                                // [x, x]
+            0x10000                                             // [0x10000, x, x]
+            gt check_0x100 jumpi                                // [x]
 
-            0x10 shr    // [x]
+            0x10 shr                                            // [x]
         
 
-            0x00 mload  // [r, x]
-            0x10 add    // [newR, x]
-            0x00 mstore // [x]
+            0x00 mload                                          // [r, x]
+            0x10 add                                            // [newR, x]
+            0x00 mstore                                         // [x]
 
     check_0x100:
             // if (x >= 0x100)
-            dup1                                            // [x, x]
-            0x100             // [0x100, x, x]
-            gt check_0x10 jumpi    // [x]
+            dup1                                                // [x, x]
+            0x100                                               // [0x100, x, x]
+            gt check_0x10 jumpi                                 // [x]
 
-            0x08 shr    // [x]
+            0x08 shr                                            // [x]
             
-            0x00 mload  // [r, x]
-            0x08 add    // [newR, x]
-            0x00 mstore // [x]
+            0x00 mload                                          // [r, x]
+            0x08 add                                            // [newR, x]
+            0x00 mstore                                         // [x]
 
     check_0x10:
             // if (x >= 0x10)
-            dup1                                            // [x, x]
-            0x10             // [0x10, x, x]
-            gt check_0x04 jumpi    // [x]
+            dup1                                                // [x, x]
+            0x10                                                // [0x10, x, x]
+            gt check_0x04 jumpi                                 // [x]
 
-            0x04 shr    // [x]
+            0x04 shr                                            // [x]
             
-            0x00 mload  // [r, x]
-            0x04 add    // [newR, x]
-            0x00 mstore // [x]
+            0x00 mload                                          // [r, x]
+            0x04 add                                            // [newR, x]
+            0x00 mstore                                         // [x]
 
     check_0x04:
             // if (x >= 0x04)
-            dup1                                            // [x, x]
-            0x04             // [0x04, x, x]
-            gt check_0x02 jumpi    // [x]
+            dup1                                                // [x, x]
+            0x04                                                // [0x04, x, x]
+            gt check_0x02 jumpi                                 // [x]
 
-            0x02 shr    // [x]
+            0x02 shr                                            // [x]
             
-            0x00 mload  // [r, x]
-            0x02 add    // [newR, x]
-            0x00 mstore // [x]
+            0x00 mload                                          // [r, x]
+            0x02 add                                            // [newR, x]
+            0x00 mstore                                         // [x]
 
     check_0x02: 
             // if (x >= 0x02)
-            dup1                                            // [x, x]
-            0x02             // [0x02, x, x]
-            gt return_after_finish jumpi    // [x]
+            dup1                                                // [x, x]
+            0x02                                                // [0x02, x, x]
+            gt return_after_finish jumpi                        // [x]
 
-            0x00 mload  // [r, x]
-            0x01 add    // [newR, x]
-            0x00 mstore // [x]
+            0x00 mload                                          // [r, x]
+            0x01 add                                            // [newR, x]
+            0x00 mstore                                         // [x]
 
 
 
@@ -134,149 +145,153 @@
 
 }
 
+
+/// @notice Returns the index of the least significant bit of the number,
+///     where the least significant bit is at index 0 and the most significant bit is at index 255
+/// @return r the index of the least significant bit
 #define macro LEAST_SIGNIFICANT_BIT() = takes(0) returns(0) {
     // lets call the input x
 
     // load x
-    0x04 calldataload                   // [x]
+    0x04 calldataload                                           // [x]
 
     // require x is greater than 0
-    dup1 0x00                 // [0x00, x, x]
-    eq revert_if_zero jumpi             // [x]
+    dup1 0x00                                                   // [0x00, x, x]
+    eq revert_if_zero jumpi                                     // [x]
 
-    0xff 0x00 mstore // return value     // [x]
+    0xff 0x00 mstore // return value                            // [x]
 
 
         // if (x & type(uint128).max > 0)
-        0x00        // [0, x]
-        dup2                                            // [x, 0, x]
-        0xffffffffffffffffffffffffffffffff             // [0xffffffffffffffffffffffffffffffff, x, 0, x]
-        and // [andedVal, 0, x]
-        gt // [1/0, x]
-        0x80 // [0x80, 1/0, x] 
-        check_0x10000000000000000 // [check_0x10000000000000000, 0x80, 1/0, x] 
-        swap2  // [1/0, 0x80, check_0x10000000000000000, x]
-        update_r jumpi    // [0x80, check_0x10000000000000000, x]
+        0x00                                                    // [0, x]
+        dup2                                                    // [x, 0, x]
+        0xffffffffffffffffffffffffffffffff                      // [0xffffffffffffffffffffffffffffffff, x, 0, x]
+        and                                                     // [andedVal, 0, x]
+        gt                                                      // [1/0, x]
+        0x80                                                    // [0x80, 1/0, x] 
+        check_0x10000000000000000                               // [check_0x10000000000000000, 0x80, 1/0, x] 
+        swap2                                                   // [1/0, 0x80, check_0x10000000000000000, x]
+        update_r jumpi                                          // [0x80, check_0x10000000000000000, x]
  
-        swap2 // [x, check_0x10000000000000000, 0x80]
-        0x80 shr    // [x, check_0x10000000000000000, 0x80]
-        swap2 pop pop // []
+        swap2                                                   // [x, check_0x10000000000000000, 0x80]
+        0x80 shr                                                // [x, check_0x10000000000000000, 0x80]
+        swap2 pop pop                                           // []
 
 
 
     check_0x10000000000000000:
         // if (x & type(uint64).max > 0)
-        0x00        // [0, x]
-        dup2                                            // [x, 0, x]
-        0xffffffffffffffff             // [0xffffffffffffffff, x, 0, x]
-        and // [andedVal, 0, x]
-        gt // [1/0, x]
-        0x40 // [0x40, 1/0, x] 
-        check_0x100000000 // [check_0x100000000, 0x40, 1/0, x] 
-        swap2  // [1/0, 0x40, check_0x100000000, x]
-        update_r jumpi    // [0x40, check_0x100000000, x]
+        0x00                                                    // [0, x]
+        dup2                                                    // [x, 0, x]
+        0xffffffffffffffff                                      // [0xffffffffffffffff, x, 0, x]
+        and                                                     // [andedVal, 0, x]
+        gt                                                      // [1/0, x]
+        0x40                                                    // [0x40, 1/0, x] 
+        check_0x100000000                                       // [check_0x100000000, 0x40, 1/0, x] 
+        swap2                                                   // [1/0, 0x40, check_0x100000000, x]
+        update_r jumpi                                          // [0x40, check_0x100000000, x]
         
-        swap2 // [x, check_0x100000000, 0x40]
-        0x40 shr    // [x, check_0x100000000, 0x40]
-        swap2 pop pop // []
+        swap2                                                   // [x, check_0x100000000, 0x40]
+        0x40 shr                                                // [x, check_0x100000000, 0x40]
+        swap2 pop pop                                           // []
             
 
     check_0x100000000:
         // if (x & type(uint32).max > 0)
-        0x00        // [0, x]
-        dup2                                            // [x, 0, x]
-        0xffffffff             // [0xffffffff, x, 0, x]
-        and // [andedVal, 0, x]
-        gt // [1/0, x]
-        0x20 // [0x20, 1/0, x] 
-        check_0x10000 // [check_0x10000, 0x20, 1/0, x] 
-        swap2  // [1/0, 0x20, check_0x10000, x]
-        update_r jumpi    // [0x20, check_0x10000, x]
+        0x00                                                    // [0, x]
+        dup2                                                    // [x, 0, x]
+        0xffffffff                                              // [0xffffffff, x, 0, x]
+        and                                                     // [andedVal, 0, x]
+        gt                                                      // [1/0, x]
+        0x20                                                    // [0x20, 1/0, x] 
+        check_0x10000                                           // [check_0x10000, 0x20, 1/0, x] 
+        swap2                                                   // [1/0, 0x20, check_0x10000, x]
+        update_r jumpi                                          // [0x20, check_0x10000, x]
         
-        swap2 // [x, check_0x10000, 0x20]
-        0x20 shr    // [x, check_0x10000, 0x20]
-        swap2 pop pop // []
+        swap2                                                   // [x, check_0x10000, 0x20]
+        0x20 shr                                                // [x, check_0x10000, 0x20]
+        swap2 pop pop                                           // []
 
         
     check_0x10000:
         // if (x & type(uint16).max > 0)
-        0x00        // [0, x]
-        dup2                                            // [x, 0, x]
-        0xffff             // [0xffff, x, 0, x]
-        and // [andedVal, 0, x]
-        gt // [1/0, x]
-        0x10 // [0x80, 1/0, x] 
-        check_0x100 // [check_0x100, 0x10, 1/0, x] 
-        swap2  // [1/0, 0x10, check_0x100, x]
-        update_r jumpi    // [0x10, check_0x100, x]
+        0x00                                                    // [0, x]
+        dup2                                                    // [x, 0, x]
+        0xffff                                                  // [0xffff, x, 0, x]
+        and                                                     // [andedVal, 0, x]
+        gt                                                      // [1/0, x]
+        0x10                                                    // [0x80, 1/0, x] 
+        check_0x100                                             // [check_0x100, 0x10, 1/0, x] 
+        swap2                                                   // [1/0, 0x10, check_0x100, x]
+        update_r jumpi                                          // [0x10, check_0x100, x]
         
-        swap2 // [x, check_0x100, 0x10]
-        0x10 shr    // [x, check_0x100, 0x10]
-        swap2 pop pop // []
+        swap2                                                   // [x, check_0x100, 0x10]
+        0x10 shr                                                // [x, check_0x100, 0x10]
+        swap2 pop pop                                           // []
         
 
     check_0x100:
         // if (x & type(uint8).max > 0)
-        0x00        // [0, x]
-        dup2                                            // [x, 0, x]
-        0xff             // [0xff, x, 0, x]
-        and // [andedVal, 0, x]
-        gt // [1/0, x]
-        0x08 // [0x08, 1/0, x] 
-        check_0x10 // [check_0x10, 0x08, 1/0, x] 
-        swap2  // [1/0, 0x08, check_0x10, x]
-        update_r jumpi    // [0x08, check_0x10, x]
+        0x00                                                    // [0, x]
+        dup2                                                    // [x, 0, x]
+        0xff                                                    // [0xff, x, 0, x]
+        and                                                     // [andedVal, 0, x]
+        gt                                                      // [1/0, x]
+        0x08                                                    // [0x08, 1/0, x] 
+        check_0x10                                              // [check_0x10, 0x08, 1/0, x] 
+        swap2                                                   // [1/0, 0x08, check_0x10, x]
+        update_r jumpi                                          // [0x08, check_0x10, x]
         
-        swap2 // [x, check_0x10, 0x08]
-        0x08 shr    // [x, check_0x10, 0x08]
-        swap2 pop pop // []
+        swap2                                                   // [x, check_0x10, 0x08]
+        0x08 shr                                                // [x, check_0x10, 0x08]
+        swap2 pop pop                                           // []
             
 
     check_0x10:
         // if (x & 0xf > 0)
-        0x00        // [0, x]
-        dup2                                            // [x, 0, x]
-        0xf             // [0xf, x, 0, x]
-        and // [andedVal, 0, x]
-        gt // [1/0, x]
-        0x04 // [0x04, 1/0, x] 
-        check_0x04 // [check_0x04, 0x04, 1/0, x] 
-        swap2  // [1/0, 0x04, check_0x04, x]
-        update_r jumpi    // [0x04, check_0x04, x]
+        0x00                                                    // [0, x]
+        dup2                                                    // [x, 0, x]
+        0xf                                                     // [0xf, x, 0, x]
+        and                                                     // [andedVal, 0, x]
+        gt                                                      // [1/0, x]
+        0x04                                                    // [0x04, 1/0, x] 
+        check_0x04                                              // [check_0x04, 0x04, 1/0, x] 
+        swap2                                                   // [1/0, 0x04, check_0x04, x]
+        update_r jumpi                                          // [0x04, check_0x04, x]
         
-        swap2 // [x, check_0x04, 0x04]
-        0x04 shr    // [x, check_0x04, 0x04]
-        swap2 pop pop // []
+        swap2                                                   // [x, check_0x04, 0x04]
+        0x04 shr                                                // [x, check_0x04, 0x04]
+        swap2 pop pop                                           // []
             
 
     check_0x04:
         // if (x & 0x03 > 0)
-        0x00        // [0, x]
-        dup2                                            // [x, 0, x]
-        0x03             // [0x03, x, 0, x]
-        and // [andedVal, 0, x]
-        gt // [1/0, x]
-        0x02 // [0x02, 1/0, x] 
-        check_0x02 // [check_0x02, 0x02, 1/0, x] 
-        swap2  // [1/0, 0x02, check_0x02, x]
-        update_r jumpi    // [0x02, check_0x02, x]
+        0x00                                                    // [0, x]
+        dup2                                                    // [x, 0, x]
+        0x03                                                    // [0x03, x, 0, x]
+        and                                                     // [andedVal, 0, x]
+        gt                                                      // [1/0, x]
+        0x02                                                    // [0x02, 1/0, x] 
+        check_0x02                                              // [check_0x02, 0x02, 1/0, x] 
+        swap2                                                   // [1/0, 0x02, check_0x02, x]
+        update_r jumpi                                          // [0x02, check_0x02, x]
         
-        swap2 // [x, check_0x02, 0x02]
-        0x02 shr    // [x, check_0x02, 0x02]
-        swap2 pop pop // []
+        swap2                                                   // [x, check_0x02, 0x02]
+        0x02 shr                                                // [x, check_0x02, 0x02]
+        swap2 pop pop                                           // []
             
 
     check_0x02: 
         // if (x & 0x01 > 0)
-        0x00        // [0, x]
-        dup2                                            // [x, 0, x]
-        0x01             // [0x01, x, 0, x]
-        and // [andedVal, 0, x]
-        gt // [1/0, x]
-        0x01 // [0x01, 1/0, x] 
-        return_after_finish // [return_after_finish, 0x01, 1/0, x] 
-        swap2  // [1/0, 0x01, return_after_finish, x]
-        update_r jumpi    // [0x01, return_after_finish, x]
+        0x00                                                    // [0, x]
+        dup2                                                    // [x, 0, x]
+        0x01                                                    // [0x01, x, 0, x]
+        and                                                     // [andedVal, 0, x]
+        gt                                                      // [1/0, x]
+        0x01                                                    // [0x01, 1/0, x] 
+        return_after_finish                                     // [return_after_finish, 0x01, 1/0, x] 
+        swap2                                                   // [1/0, 0x01, return_after_finish, x]
+        update_r jumpi                                          // [0x01, return_after_finish, x]
 
 
 
@@ -287,11 +302,11 @@
 
 // expecting stack of [subAmount, jumpTo, x]
     update_r:
-        0x00 mload  // [r, subAmount, jumpTo, x]
-        sub // [newR, jumpTo, x]
-        0x00 mstore // [jumpTo, x]
+        0x00 mload                                              // [r, subAmount, jumpTo, x]
+        sub                                                     // [newR, jumpTo, x]
+        0x00 mstore                                             // [jumpTo, x]
 
-        jump // [x]
+        jump                                                    // [x]
 
 
     revert_if_zero:
