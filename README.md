@@ -1,5 +1,5 @@
 # **OWNED2STEP**
 
-Huff implementation of Ownable2Step by Openzeppelin
+Huff implementation of popular solidity libraries and contracts.
 
-NOTE: Unaudited, for educational | fun purposes do not use in production.
+    NOTE: Unaudited, for educational | fun purposes. Do not use in production.

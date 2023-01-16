@@ -6,13 +6,13 @@ ffi = true
 solc = "0.8.16"
 
 fs_permissions = [
-    { access = "read", path = "./test/mocks/Owned2StepWrappers.huff" }
+    { access = "read", path = "./test/mocks/Owned2StepWrappers.huff" },
+    { access = "read", path = "./test/mocks/BitMathWrappers.huff" }
 ]
-
-fuzz_runs = 1000
 
 remappings = [
     "forge-std/=lib/forge-std/src/",
     "foundry-huff/=lib/foundry-huff/src/"
 ]
+
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
