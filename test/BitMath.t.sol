@@ -13,7 +13,7 @@ interface BitMath {
     function leastSignificantBit(uint256) external pure returns (uint8);
 }
 
-contract BitMathTest is Test {
+contract BitMathTest_tests is Test {
     BitMath bitMath;
     BitMathMock bitMathMock;
 

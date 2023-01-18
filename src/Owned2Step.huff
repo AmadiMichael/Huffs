@@ -2,7 +2,11 @@
 /// @notice SPDX-License-Identifier: MIT
 /// @author michaels <https://github.com/amadimichael>
 /// @notice A 2 step single owner authorization module
-/// @notice Adapted from <https://github.com/pentagonxyz/huffmate/blob/main/src/auth/Owned.huff>
+
+
+// Imports
+#include "./utils/NonPayable.huff"
+
 
 // Interface
 #define function transferOwnership(address) nonpayable returns ()
@@ -54,6 +58,8 @@
 /// @notice begins Transfer the Ownership
 /// @param {owner} [address] - The new owner
 #define macro TRANSFER_OWNERSHIP() = takes (0) returns (0) {
+  NON_PAYABLE()
+
   // Check that the caller is authorized
   IS_OWNER()                                // []
 
@@ -73,6 +79,9 @@
 
 /// @notice Accept Ownership Transfer
 #define macro ACCEPT_OWNERSHIP() = takes (0) returns (0) {
+  NON_PAYABLE()
+
+
   // Check that the caller is pending owner
   IS_PENDING_OWNER()                // []
 
@@ -100,6 +109,8 @@
 /// @notice Get the owner of the contract
 /// @return {owner} [address] - The owner of the contract
 #define macro OWNER() = takes (0) returns (0) {
+  NON_PAYABLE()
+
   [_OWNER] sload                    // [owner]
   0x00 mstore                       // []
   0x20 0x00 return
@@ -108,6 +119,8 @@
 /// @notice Get the pending owner of the contract
 /// @return {pending owner} [address] - The pending owner of the contract
 #define macro PENDING_OWNER() = takes (0) returns (0) {
+  NON_PAYABLE()
+  
   [_PENDING_OWNER] sload               // [Pendingowner]
   0x00 mstore                          // []
   0x20 0x00 return
@@ -176,22 +189,22 @@
 
 /// @dev To compile alone, use this (see abstract contract implementation below).
 /// @notice Main Function Dispatcher
-#define macro MAIN() = takes (0) returns (0) {
-  // Doesn't return anything. 
+// #define macro MAIN() = takes (0) returns (0) {
+//   // Doesn't return anything. 
 
-  // get the function signature
-  0x00                          // [0x00]
-  calldataload                  // [calldata]
-  0xe0                          // [0xe0, calldata]
-  shr                           // [left_padded_function_selector]
+//   // get the function signature
+//   0x00                          // [0x00]
+//   calldataload                  // [calldata]
+//   0xe0                          // [0xe0, calldata]
+//   shr                           // [left_padded_function_selector]
 
-  OWNED2STEP_MAIN()             // []
+//   OWNED2STEP_MAIN()             // []
 
-  0x00 0x00 revert
-}
+//   0x00 0x00 revert
+// }
 
 /// @dev To compile alone, use this (see abstract contract implementation below).
 /// @notice CONSTRUCTOR
-#define macro CONSTRUCTOR() = takes (0) returns (0) {
-  OWNED2STEP_CONSTRUCTOR()
-}
+// #define macro CONSTRUCTOR() = takes (0) returns (0) {
+//   OWNED2STEP_CONSTRUCTOR()
+// }

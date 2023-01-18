@@ -4,6 +4,11 @@
 /// @notice This library provides functionality for computing bit properties of an unsigned integer. 
 /// @notice Adapted from <https://github.com/Uniswap/v3-core/blob/main/contracts/libraries/BitMath.sol>
 
+
+// Imports
+#include "./utils/NonPayable.huff"
+
+
 // interface
 #define function mostSignificantBit(uint256) nonpayable returns (uint8)
 #define function leastSignificantBit(uint256) nonpayable returns (uint8)
@@ -33,6 +38,8 @@
 ///     where the least significant bit is at index 0 and the most significant bit is at index 255
 /// @return r the index of the most significant bit
 #define macro MOST_SIGNIFICANT_BIT() = takes(0) returns(0) {
+    NON_PAYABLE()
+
     // lets call the input data `x`
 
     // load x
@@ -150,6 +157,9 @@
 ///     where the least significant bit is at index 0 and the most significant bit is at index 255
 /// @return r the index of the least significant bit
 #define macro LEAST_SIGNIFICANT_BIT() = takes(0) returns(0) {
+    NON_PAYABLE()
+
+    
     // lets call the input x
 
     // load x

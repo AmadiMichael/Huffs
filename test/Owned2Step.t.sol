@@ -26,7 +26,7 @@ interface Owned2Step {
     function pendingOwner() external view returns (address);
 }
 
-contract Owned2StepTest is Test {
+contract Owned2Step_tests is Test {
     Owned2Step owned2Step;
     address constant OWNER = address(0x420);
 
