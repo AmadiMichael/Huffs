@@ -19,7 +19,7 @@
 #define function withdraw(uint256) nonpayable returns()
 #define function totalSupply() nonpayable  returns(uint256)
 
-#define function approve(address) nonpayable returns(bool)
+#define function approve(address, uint256) nonpayable returns(bool)
 #define function transfer(address, uint256) nonpayable returns(bool)
 #define function transferFrom(address, address, uint256) nonpayable returns(bool)
 
@@ -63,31 +63,32 @@
     jumpi                         // [left_padded_function_selector]
 
     dup1 __FUNC_SIG(name) eq _name jumpi  // [left_padded_function_selector]
+    dup1 __FUNC_SIG(approve) eq _approve jumpi      // [left_padded_function_selector]
     dup1 __FUNC_SIG(totalSupply) eq _totalSupply jumpi      // [left_padded_function_selector]
     dup1 __FUNC_SIG(transferFrom)    eq _transferFrom jumpi                        // [left_padded_function_selector]
-    dup1 __FUNC_SIG(withdraw) eq _withdraw jumpi            // [left_padded_function_selector]
 
 
     _deposit jump
 
 
   _pivot1:
-        dup1 __FUNC_SIG(transfer)     // [left_padded_function_selector, _name.sig, left_padded_function_selector]
+        dup1 __FUNC_SIG(symbol)     // [left_padded_function_selector, _name.sig, left_padded_function_selector]
         lt _pivot2                   // [_pivot2, 1/0, left_padded_function_selector]
         jumpi                         // [left_padded_function_selector]
 
+        dup1 __FUNC_SIG(withdraw) eq _withdraw jumpi            // [left_padded_function_selector]
         dup1 __FUNC_SIG(decimals) eq _decimals jumpi  // [left_padded_function_selector]
         dup1 __FUNC_SIG(balanceOf) eq _balanceOf jumpi      // [left_padded_function_selector]
         dup1 __FUNC_SIG(symbol)    eq _symbol jumpi                        // [left_padded_function_selector]
-        dup1 __FUNC_SIG(transfer) eq _transfer jumpi            // [left_padded_function_selector]
+
 
   _pivot2:
         dup1 __FUNC_SIG(allowance)     // [left_padded_function_selector, _name.sig, left_padded_function_selector]
         lt _deposit                   // [_deposit, 1/0, left_padded_function_selector]
         jumpi                         // [left_padded_function_selector]
 
-        dup1 __FUNC_SIG(deposit) eq _deposit jumpi  // [left_padded_function_selector]
-        dup1 __FUNC_SIG(approve) eq _approve jumpi      // [left_padded_function_selector]
+        dup1 __FUNC_SIG(transfer) eq _transfer jumpi            // [left_padded_function_selector]
+        dup1 __FUNC_SIG(deposit) eq _deposit jumpi  // [left_padded_function_selector]    
         dup1 __FUNC_SIG(allowance)  eq _allowance jumpi                        // [left_padded_function_selector]
 
 
@@ -280,20 +281,19 @@
 #define macro APPROVE() = {
     NON_PAYABLE()
 
-    0x04 calldataload                               // [wad]
-    0x24 calldataload dup1                          // [guy, guy, wad]
+    0x24 calldataload                               // [wad]
+    0x04 calldataload dup1                          // [guy, guy, wad]
     caller                                          // [msg.sender, guy, guy, wad]
     
     GET_USER_TO_OPERATOR_ALLOWANCE_SLOT()           // [allowanceSlot, guy, wad]
-    swap2 dup1                                      // [wad, wad, allowanceSlot, guy]
-    swap2 sstore                                    // [wad, guy]
+    dup2 swap1                                      // [allowanceSlot, wad, guy, wad]
+    sstore swap1                                    // [wad, guy]
 
     0x00 mstore                                     // [guy]
     caller __EVENT_HASH(Approval)                   // [eventHash, caller, guy]       
-    log3                                            // []   
+    0x20 0x00 log3                                  // []   
 
     0x01 0x00 mstore    // this line can be commented out to prevent users from approving 0 unnecessarily
-
     0x20 0x00 return
 }
 
@@ -320,16 +320,19 @@
 
     // underflow check
     dup3 dup2 dup5                      // [val, balance, val, balance, balSlot, val]
-    lt revert_insufficientBalance jumpi           // [val, balance, balSlot, val]
+    gt revert_insufficientBalance jumpi           // [val, balance, balSlot, val]
 
     swap1 sub                           // [newBalance, balSlot, val]
     swap1 sstore                        // [val]
+    continue jump
 
     revert_insufficientBalance:
             0x13be252b00000000000000000000000000000000000000000000000000000000
             0x00 mstore
                 
             0x04 0x00 revert
+
+    continue:
 }
 
 #define macro INCREASE_BALANCE() = {
@@ -344,7 +347,7 @@
     // which signifies bigger problems and means 'We're NGMI'
 }
 
-#define fn GET_USER_BALANCE_SLOT() = {
+#define macro GET_USER_BALANCE_SLOT() = {
     // expects stack of [user, ...]
     0x00 mstore
     [_BALANCEOF] 0x20 mstore
@@ -352,15 +355,14 @@
     0x40 0x00 sha3      // [usersBalanceSlot]
 }
 
-#define fn GET_USER_TO_OPERATOR_ALLOWANCE_SLOT() = {
+#define macro GET_USER_TO_OPERATOR_ALLOWANCE_SLOT() = {
     // expects stack of [approver, approvee, ...]
     0x00 mstore                             // [approvee, ...]
     [_ALLOWANCE] 0x20 mstore                // [approvee, ...]
 
     0x40 0x00 sha3                          // [hash, approvee, ...]
-    
-    swap1                                   // [approvee, hash, ...]
-    0x00 mstore                             // [hash, ...]
+
+    0x20 mstore                             // [approvee, ...]
     0x00 mstore                             // [...]
 
     0x40 0x00 sha3                          // [allowanceSlot, ...]
