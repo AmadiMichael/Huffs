@@ -1,0 +1,367 @@
+/// @title Owned2Step
+/// @notice SPDX-License-Identifier: MIT
+/// @author michaels <https://github.com/amadimichael>
+/// @notice Wrapped Ether implementation in Huff
+
+
+// Imports
+#include "./utils/NonPayable.huff"
+
+// Interface
+#define function name() nonpayable returns(string)
+#define function symbol() nonpayable  returns(string)
+#define function decimals() nonpayable  returns(uint256)
+
+#define function balanceOf(address) nonpayable  returns(uint256)
+#define function allowance(address, address) nonpayable  returns(uint256)
+
+#define function deposit() payable returns()
+#define function withdraw(uint256) nonpayable returns()
+#define function totalSupply() nonpayable  returns(uint256)
+
+#define function approve(address) nonpayable returns(bool)
+#define function transfer(address, uint256) nonpayable returns(bool)
+#define function transferFrom(address, address, uint256) nonpayable returns(bool)
+
+
+// storage
+#define constant _NAME = 0x577261707065642045746865720000000000000000000000000000000000001a   // 0
+#define constant _SYMBOL = 0x5745544800000000000000000000000000000000000000000000000000000008    // 1
+#define constant _DECIMALS = 0x12   // 2
+
+#define constant _BALANCEOF = FREE_STORAGE_POINTER()    // 3
+#define constant _ALLOWANCE = FREE_STORAGE_POINTER()   // 4
+
+// events
+#define  event  Approval(address indexed src, address indexed guy, uint wad)
+#define  event  Transfer(address indexed src, address indexed dst, uint wad)
+#define  event  Deposit(address indexed dst, uint wad)
+#define  event  Withdrawal(address indexed src, uint wad)
+
+
+// ERRORS
+#define error InsufficientBalance()
+#define error InsufficientAllowance()
+#define error WithdrawalFailed()
+
+
+#define macro MAIN() = takes(0) returns(0) {
+// Doesn't return anything. 
+
+  // get the function signature
+  0x00                          // [0x00]
+  calldataload                  // [calldata]
+  0xe0                          // [0xe0, calldata]
+  shr                           // [left_padded_function_selector]
+
+
+    // JUMP TABLE
+
+    // first pivot
+    dup1 __FUNC_SIG(withdraw)     // [left_padded_function_selector, _name.sig, left_padded_function_selector]
+    lt _pivot1                    // [_pivot1, 1/0, left_padded_function_selector]
+    jumpi                         // [left_padded_function_selector]
+
+    dup1 __FUNC_SIG(name) eq _name jumpi  // [left_padded_function_selector]
+    dup1 __FUNC_SIG(totalSupply) eq _totalSupply jumpi      // [left_padded_function_selector]
+    dup1 __FUNC_SIG(transferFrom)    eq _transferFrom jumpi                        // [left_padded_function_selector]
+    dup1 __FUNC_SIG(withdraw) eq _withdraw jumpi            // [left_padded_function_selector]
+
+
+    _deposit jump
+
+
+  _pivot1:
+        dup1 __FUNC_SIG(transfer)     // [left_padded_function_selector, _name.sig, left_padded_function_selector]
+        lt _pivot2                   // [_pivot2, 1/0, left_padded_function_selector]
+        jumpi                         // [left_padded_function_selector]
+
+        dup1 __FUNC_SIG(decimals) eq _decimals jumpi  // [left_padded_function_selector]
+        dup1 __FUNC_SIG(balanceOf) eq _balanceOf jumpi      // [left_padded_function_selector]
+        dup1 __FUNC_SIG(symbol)    eq _symbol jumpi                        // [left_padded_function_selector]
+        dup1 __FUNC_SIG(transfer) eq _transfer jumpi            // [left_padded_function_selector]
+
+  _pivot2:
+        dup1 __FUNC_SIG(allowance)     // [left_padded_function_selector, _name.sig, left_padded_function_selector]
+        lt _deposit                   // [_deposit, 1/0, left_padded_function_selector]
+        jumpi                         // [left_padded_function_selector]
+
+        dup1 __FUNC_SIG(deposit) eq _deposit jumpi  // [left_padded_function_selector]
+        dup1 __FUNC_SIG(approve) eq _approve jumpi      // [left_padded_function_selector]
+        dup1 __FUNC_SIG(allowance)  eq _allowance jumpi                        // [left_padded_function_selector]
+
+
+  _name:
+      pop
+      NAME()
+  _totalSupply:
+      pop
+      TOTAL_SUPPLY()
+  _transferFrom:
+      pop
+      TRANSFER_FROM()
+  _withdraw:
+      pop
+      WITHDRAW()
+  _decimals:
+      pop
+      DECIMALS()
+  _balanceOf:
+      pop
+      BALANCE_OF()
+  _symbol:
+      pop
+      SYMBOL()
+  _transfer:
+      pop
+      TRANSFER()
+  _deposit:
+      pop
+      DEPOSIT()
+  _approve:
+      pop
+      APPROVE()
+  _allowance:
+      pop
+      ALLOWANCE()
+}
+
+
+#define macro NAME() = {
+    NON_PAYABLE()
+
+    [_NAME] sload
+    0x00 mstore                                                                         // []                   
+    0x20 0x00 return
+}
+
+#define macro TOTAL_SUPPLY() = {
+    NON_PAYABLE()
+
+    selfbalance 0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro TRANSFER_FROM() = {
+    NON_PAYABLE()
+
+// no need for  require(balanceOf[src] >= wad); as there's underflow check
+
+    caller 0x04 calldataload                // [approver, approvee]
+    GET_USER_TO_OPERATOR_ALLOWANCE_SLOT() dup1   // [approvalSlot, approvalSlot]
+    sload dup1                                  // [allowance, allowance, approvalSlot]
+    0x44 calldataload                        // [wad, allowance, allowance, approvalSlot]
+    gt revert_insufficientAllowance jumpi       // [allowance, approvalSlot]
+
+    0x44 calldataload dup1                  // [wad, wad, allowance, approvalSlot]
+    swap2 sub                               // [newAllowance, wad, approvalSlot]
+    dup3 sstore                             // [wad, approvalSlot]
+
+    0x04 calldataload                       // [caller, wad, approvalSlot]
+    DEDUCT_BALANCE()                        // [wad, approvalSlot]
+    0x24 calldataload                       // [dst, wad, approvalSlot]
+    INCREASE_BALANCE()                      // [wad, approvalSlot]
+
+    0x00 mstore pop                         // []
+    0x04 calldataload caller                // [src, dst]
+    __EVENT_HASH(Transfer)                  // [transferEventHash, src, dst]
+    0x20 0x00 log3                          // []
+
+    0x01 0x00 mstore            // this line can be commented out to prevent users from approving 0 unnecessarily
+    0x20 0x00 return
+
+    revert_insufficientAllowance:
+                0xf4d678b800000000000000000000000000000000000000000000000000000000
+                0x00 mstore
+                
+                0x04 0x00 revert
+}
+
+#define macro WITHDRAW() = {
+    NON_PAYABLE()
+
+        caller GET_USER_BALANCE_SLOT() dup1              // [slot, slot]
+        sload dup1                                      // [bal, bal, slot]
+        0x04 calldataload dup1                          // [wad, wad, bal, bal, slot]
+        swap2 swap1                                      // [wad, bal, wad, bal, slot]
+        gt revert_insufficientBalance jumpi              // [wad, bal, slot]          
+        
+        dup1 swap2 sub                                    // [newBal, wad, slot]
+        dup3 sstore dup1                                    // [wad, wad, slot]
+
+        returndatasize returndatasize                       // [0x00, 0x00, wad, wad, slot]
+        returndatasize returndatasize                       // [0x00, 0x00, 0x00, 0x00, wad, wad, slot]
+        swap4                                               // [wad, 0x00, 0x00, 0x00, 0x00, wad, slot]
+        caller gas                                          // [gasLeft, msg.sender, wad, 0x00, 0x00, 0x00, 0x00, wad, slot] 
+        call                                                // [0/1, wad, slot]
+        iszero revert_withdrawFailed jumpi                  // [wad, slot]       
+
+        0x00 mstore pop                                    // []
+
+        caller __EVENT_HASH(Withdrawal)                     // [withdrawEventSig, src]
+        0x20 0x00 log2
+        stop
+
+        revert_insufficientBalance:
+            0xf4d678b800000000000000000000000000000000000000000000000000000000
+            0x00 mstore
+                
+            0x04 0x00 revert
+
+        revert_withdrawFailed:
+            0x27fcd9d100000000000000000000000000000000000000000000000000000000
+            0x00 mstore
+                
+            0x04 0x00 revert
+}
+
+#define macro DECIMALS() = {
+    NON_PAYABLE()
+
+    [_DECIMALS] sload 
+    0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro BALANCE_OF() = {
+    NON_PAYABLE()
+
+    0x04 calldataload                               // [user]
+    caller GET_USER_BALANCE_SLOT()                  // [balanceSlot]
+    sload                                           // [balance]
+
+    0x00 mstore                                     // []
+    0x20 0x00 return
+}
+
+#define macro SYMBOL() = {
+    NON_PAYABLE()
+
+    [_SYMBOL] sload
+    0x00 mstore                                                             // []
+    0x20 0x00 return
+}
+
+#define macro TRANSFER() = {
+    NON_PAYABLE()
+
+// no need for  require(balanceOf[src] >= wad); as there's underflow check
+
+    0x24 calldataload caller                // [caller, wad]
+    DEDUCT_BALANCE()                        // [wad]
+    0x04 calldataload                       // [dst, wad]
+    INCREASE_BALANCE()                      // [wad]
+
+    0x00 mstore                             // []
+    0x04 calldataload caller                // [src, dst]
+    __EVENT_HASH(Transfer)                  // [transferEventHash, src, dst]
+    0x20 0x00 log3                          // []
+
+    0x01 0x00 mstore            // this line can be commented out to prevent users from transfering 0 unnecessarily
+    0x20 0x00 return
+}
+
+#define macro DEPOSIT() = {
+
+    // increase balance
+    callvalue caller
+    INCREASE_BALANCE()
+
+    // emit deposit event
+    caller __EVENT_HASH(Deposit)            // [msg.sender, depositEventHash]
+
+    // push msg.value to memory
+    callvalue 0x00 mstore                   // [msg.sender, depositEventHash] 
+    0x20 0x00 log2
+
+    stop
+}
+
+#define macro APPROVE() = {
+    NON_PAYABLE()
+
+    0x04 calldataload                               // [wad]
+    0x24 calldataload dup1                          // [guy, guy, wad]
+    caller                                          // [msg.sender, guy, guy, wad]
+    
+    GET_USER_TO_OPERATOR_ALLOWANCE_SLOT()           // [allowanceSlot, guy, wad]
+    swap2 dup1                                      // [wad, wad, allowanceSlot, guy]
+    swap2 sstore                                    // [wad, guy]
+
+    0x00 mstore                                     // [guy]
+    caller __EVENT_HASH(Approval)                   // [eventHash, caller, guy]       
+    log3                                            // []   
+
+    0x01 0x00 mstore    // this line can be commented out to prevent users from approving 0 unnecessarily
+
+    0x20 0x00 return
+}
+
+#define macro ALLOWANCE() = {
+    NON_PAYABLE()
+
+    0x24 calldataload                               // [approvee]
+    0x04 calldataload                               // [approver, approvee]
+    
+    GET_USER_TO_OPERATOR_ALLOWANCE_SLOT()           // [allowanceSlot]
+    sload                                           // [allowance]
+
+    0x00 mstore                                     // []
+
+    0x20 0x00 return
+}
+
+
+
+#define macro DEDUCT_BALANCE() = {
+    // expects stack of [user, val]
+    GET_USER_BALANCE_SLOT() dup1        // [balSlot, balSlot, val]
+    sload                               // [balance, balSlot, val]
+
+    // underflow check
+    dup3 dup2 dup5                      // [val, balance, val, balance, balSlot, val]
+    lt revert_insufficientBalance jumpi           // [val, balance, balSlot, val]
+
+    swap1 sub                           // [newBalance, balSlot, val]
+    swap1 sstore                        // [val]
+
+    revert_insufficientBalance:
+            0x13be252b00000000000000000000000000000000000000000000000000000000
+            0x00 mstore
+                
+            0x04 0x00 revert
+}
+
+#define macro INCREASE_BALANCE() = {
+    // expects stack of [user, val]
+    GET_USER_BALANCE_SLOT() dup1        // [balSlot, balSlot, val]
+    sload                               // [balance, balSlot, val]
+    dup3 add                            // [newBalance, balSlot, val]
+
+    swap1 sstore
+
+    // no need for overflow check as it means eth supply is over 2*256
+    // which signifies bigger problems and means 'We're NGMI'
+}
+
+#define fn GET_USER_BALANCE_SLOT() = {
+    // expects stack of [user, ...]
+    0x00 mstore
+    [_BALANCEOF] 0x20 mstore
+
+    0x40 0x00 sha3      // [usersBalanceSlot]
+}
+
+#define fn GET_USER_TO_OPERATOR_ALLOWANCE_SLOT() = {
+    // expects stack of [approver, approvee, ...]
+    0x00 mstore                             // [approvee, ...]
+    [_ALLOWANCE] 0x20 mstore                // [approvee, ...]
+
+    0x40 0x00 sha3                          // [hash, approvee, ...]
+    
+    swap1                                   // [approvee, hash, ...]
+    0x00 mstore                             // [hash, ...]
+    0x00 mstore                             // [...]
+
+    0x40 0x00 sha3                          // [allowanceSlot, ...]
+}
