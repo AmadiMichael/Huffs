@@ -13,7 +13,7 @@
 #define function mostSignificantBit(uint256) nonpayable returns (uint8)
 #define function leastSignificantBit(uint256) nonpayable returns (uint8)
 
-#define macro BITMAP_MAIN() = takes(1) returns(0) {
+#define macro BITMATH_MAIN() = takes(1) returns(0) {
     // Input Stack: [left_padded_function_selector]
 
     dup1 __FUNC_SIG(mostSignificantBit) eq most_significant_bit jumpi     // [left_padded_function_selector]
@@ -337,7 +337,7 @@
 //   0xe0                          // [0xe0, calldata]
 //   shr                           // [left_padded_function_selector]
 
-//   BITMAP_MAIN()                 // []
+//   BITMATH_MAIN()                 // []
 
 //   0x00 0x00 revert
 // }
