@@ -1,0 +1,74 @@
+/// @title Euclidean Algorithm (GCD solver)
+/// @notice SPDX-License-Identifier: MIT
+/// @author michaels <https://github.com/amadimichael>
+/// @notice This library provides functionality for computing the greatest common divisor of 2 unsigned integers using euclideans algorithm.
+
+
+//interface
+#define function gcd(uint256, uint256) nonpayable returns(uint256)
+
+#include "./NonPayable.huff"
+
+#define macro GCD() = takes(2) returns(1) {
+    // expects minimum of two values on stack = [a, b, ...]
+    NON_PAYABLE()
+
+    MIN_MAX()                               // [modulus, divisor]
+
+    loopStart:
+        dup1                                // [cache_modulus, modulus, divisor]
+        swap2                               // [divisor, modulus, cache_modulus]
+        mod                                 // [new_modulus, new_divisor]  cache_modulus becomes new divisor
+
+        // if new_modulus is 0 use cache_modulus (now new_divisor) as gcd
+        dup1 iszero                         // [0/1, new_modulus, new_divisor] 
+        returnGcd jumpi                     // [new_modulus, new_divisor]
+
+        // else reloop
+        loopStart jump                      // [new_modulus, new_divisor]
+
+    returnGcd:
+        pop
+}
+
+#define macro MIN_MAX() = takes(2) returns(1) {
+    // expects minimum of two values on stack = [a, b, ...]
+
+    dup1 dup3                               // [a, b, a, b, ...]
+    lt                                      // [0/1, a, b, ...]
+    iszero notLessThan jumpi                // [0/1, a, b]
+
+    pop continue jump                       // [a, b]
+    
+    notLessThan: 
+        pop swap1                           // [b, a]  
+
+    continue:
+}
+
+
+
+/// @dev For stand alone tests and huffc compilation
+
+/// @dev To compile alone, use this (see abstract contract implementation below).
+/// @notice Main Function Dispatcher
+#define macro MAIN() = takes (0) returns (0) {
+    // Doesn't return anything. 
+
+    // get the function signature
+    0x00                                    // [0x00]
+    calldataload                            // [calldata]
+    0xe0                                    // [0xe0, calldata]
+    shr                                     // [left_padded_function_selector]
+
+    dup1 __FUNC_SIG(gcd) eq _gcd jumpi      // [left_padded_function_selector]
+
+    // Bubble up to parent macro
+    no_match jump
+
+    _gcd:
+        GCD()
+
+    no_match: 
+        0x00 0x00 revert
+}
