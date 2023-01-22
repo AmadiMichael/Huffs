@@ -5,7 +5,7 @@
 
 
 // Imports
-#include "./utils/NonPayable.huff"
+// #include "./utils/NonPayable.huff"
 
 
 // Interface
@@ -58,7 +58,7 @@
 /// @notice begins Transfer the Ownership
 /// @param {owner} [address] - The new owner
 #define macro TRANSFER_OWNERSHIP() = takes (0) returns (0) {
-  NON_PAYABLE()
+  // NON_PAYABLE()
 
   // Check that the caller is authorized
   IS_OWNER()                                // []
@@ -79,7 +79,7 @@
 
 /// @notice Accept Ownership Transfer
 #define macro ACCEPT_OWNERSHIP() = takes (0) returns (0) {
-  NON_PAYABLE()
+  // NON_PAYABLE()
 
 
   // Check that the caller is pending owner
@@ -109,7 +109,7 @@
 /// @notice Get the owner of the contract
 /// @return {owner} [address] - The owner of the contract
 #define macro OWNER() = takes (0) returns (0) {
-  NON_PAYABLE()
+  // NON_PAYABLE()
 
   [_OWNER] sload                    // [owner]
   0x00 mstore                       // []
@@ -119,7 +119,7 @@
 /// @notice Get the pending owner of the contract
 /// @return {pending owner} [address] - The pending owner of the contract
 #define macro PENDING_OWNER() = takes (0) returns (0) {
-  NON_PAYABLE()
+  // NON_PAYABLE()
   
   [_PENDING_OWNER] sload               // [Pendingowner]
   0x00 mstore                          // []
