@@ -1,8 +1,8 @@
 #define macro NON_PAYABLE () = {
-    callvalue 0x00              // [callvalue, 0x00]
-    eq continue jumpi           // []
+    callvalue iszero         // [0/1, callvalue]
+    continue jumpi           // []
 
-    0x00 0x00 revert            // []
+    0x00 0x00 revert         // []
 
     continue:
 }
