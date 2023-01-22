@@ -6,7 +6,7 @@
 
 
 // Imports
-#include "./utils/NonPayable.huff"
+// #include "./utils/NonPayable.huff"
 
 
 // interface
@@ -38,7 +38,7 @@
 ///     where the least significant bit is at index 0 and the most significant bit is at index 255
 /// @return r the index of the most significant bit
 #define macro MOST_SIGNIFICANT_BIT() = takes(0) returns(0) {
-    NON_PAYABLE()
+    // NON_PAYABLE()
 
     // lets call the input data `x`
 
@@ -134,7 +134,7 @@
 
     check_0x02: 
             // if (x >= 0x02)
-            dup1                                                // [x, x]
+            // dup1                                                // [x, x]
             0x02                                                // [0x02, x, x]
             gt return_after_finish jumpi                        // [x]
 
@@ -157,7 +157,7 @@
 ///     where the least significant bit is at index 0 and the most significant bit is at index 255
 /// @return r the index of the least significant bit
 #define macro LEAST_SIGNIFICANT_BIT() = takes(0) returns(0) {
-    NON_PAYABLE()
+    // NON_PAYABLE()
 
     
     // lets call the input x
