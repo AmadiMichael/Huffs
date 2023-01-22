@@ -11,7 +11,7 @@
   0xe0                          // [0xe0, calldata]
   shr                           // [left_padded_function_selector]
 
-  BITMAP_MAIN()                 // []
+  BITMATH_MAIN()                 // []
 
   0x00 0x00 revert
 }

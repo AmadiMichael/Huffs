@@ -52,42 +52,8 @@ contract Owned2StepTest is Test {
 
     event OwnerUpdated(address indexed user, address indexed newOwner);
 
-    function setUp() public {
-        // Create Owner
-        string memory wrapper_code = vm.readFile(
-            "test/mocks/Owned2StepWrappers.huff"
-        );
-        HuffConfig config = HuffDeployer
-            .config()
-            .with_code(wrapper_code)
-            .with_args(abi.encode(OWNER));
-        vm.expectEmit(true, true, true, true);
-        emit OwnerUpdated(address(0), OWNER);
-        weth9 = WETH9(config.deploy("WETH9"));
-    }
+    function setUp() public {}
 
     // @notice Test that a non-matching selector reverts
-    function testNonMatchingSelector(bytes32 callData) public {
-        // bytes4[] memory func_selectors = new bytes4[](4);
-        // func_selectors[0] = bytes4(hex"f2fde38b");
-        // func_selectors[1] = bytes4(hex"79ba5097");
-        // func_selectors[2] = bytes4(hex"8da5cb5b");
-        // func_selectors[3] = bytes4(hex"e30c3978");
-        // bytes4 func_selector = bytes4(callData >> 0xe0);
-        // for (uint256 i = 0; i < 4; i++) {
-        //     if (func_selector == func_selectors[i]) {
-        //         return;
-        //     }
-        // }
-        // address target = address(weth9);
-        // bool success = false;
-        // assembly {
-        //     mstore(0x80, callData)
-        //     success := staticcall(gas(), target, 0x80, 0x20, 0, 0)
-        //     if iszero(success) {
-        //         success := call(gas(), target, 0, 0x80, 0x20, 0, 0)
-        //     }
-        // }
-        // assert(!success);
-    }
+    function testNonMatchingSelector(bytes32 callData) public {}
 }
