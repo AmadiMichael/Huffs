@@ -5,7 +5,7 @@ import {Test} from "forge-std/Test.sol";
 import {HuffConfig} from "foundry-huff/HuffConfig.sol";
 import {HuffDeployer} from "foundry-huff/HuffDeployer.sol";
 import "forge-std/console.sol";
-import {BitMathMock} from "src/Mocks/BitMathMock.sol";
+import {BitMathMock} from "./mocks/BitMathMock.sol";
 
 interface BitMath {
     function mostSignificantBit(uint256) external pure returns (uint8);
