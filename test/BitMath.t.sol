@@ -6,6 +6,7 @@ import {HuffConfig} from "foundry-huff/HuffConfig.sol";
 import {HuffDeployer} from "foundry-huff/HuffDeployer.sol";
 import "forge-std/console.sol";
 import {BitMathMock} from "./mocks/BitMathMock.sol";
+import {NonMatchingSelectorsHelper} from "test/utils/NonMatchingSelectorHelper.sol";
 
 interface BitMath {
     function mostSignificantBit(uint256) external pure returns (uint8);
@@ -13,7 +14,7 @@ interface BitMath {
     function leastSignificantBit(uint256) external pure returns (uint8);
 }
 
-contract BitMathTest_tests is Test {
+contract BitMathTest_tests is Test, NonMatchingSelectorsHelper {
     BitMath bitMath;
     BitMathMock bitMathMock;
 

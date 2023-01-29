@@ -5,6 +5,7 @@ import {Test} from "forge-std/Test.sol";
 import {HuffConfig} from "foundry-huff/HuffConfig.sol";
 import {HuffDeployer} from "foundry-huff/HuffDeployer.sol";
 import "forge-std/console.sol";
+import {NonMatchingSelectorsHelper} from "test/utils/NonMatchingSelectorHelper.sol";
 
 interface Owned2Step {
     event OwnershipTransferStarted(
@@ -26,7 +27,7 @@ interface Owned2Step {
     function pendingOwner() external view returns (address);
 }
 
-contract Owned2Step_tests is Test {
+contract Owned2Step_tests is Test, NonMatchingSelectorsHelper {
     Owned2Step owned2Step;
     address constant OWNER = address(0x420);
 
@@ -59,23 +60,11 @@ contract Owned2Step_tests is Test {
         func_selectors[2] = bytes4(hex"8da5cb5b");
         func_selectors[3] = bytes4(hex"e30c3978");
 
-        bytes4 func_selector = bytes4(callData >> 0xe0);
-        for (uint256 i = 0; i < 4; i++) {
-            if (func_selector == func_selectors[i]) {
-                return;
-            }
-        }
-
-        address target = address(owned2Step);
-        bool success = false;
-        assembly {
-            mstore(0x80, callData)
-            success := staticcall(gas(), target, 0x80, 0x20, 0, 0)
-
-            if iszero(success) {
-                success := call(gas(), target, 0, 0x80, 0x20, 0, 0)
-            }
-        }
+        bool success = nonMatchingSelectorHelper(
+            func_selectors,
+            callData,
+            address(owned2Step)
+        );
         assert(!success);
     }
 
