@@ -9,5 +9,6 @@ Huff implementation of popular solidity libraries and contracts.
 - Ownable (Owned) 2 STEP
 - Uniswap v3 BitMath Library
 - Wrapped Ether (WETH9)
+- Commit Reveal Scheme
 - Euclidean Algorithm (GCD solver)
 - Non Payable
