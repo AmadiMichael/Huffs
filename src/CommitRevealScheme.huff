@@ -3,3 +3,150 @@
 /// @author michaels <https://github.com/amadimichael>
 /// @notice 
 
+// Interface
+#define function register(bytes32) nonpayable returns()
+#define function submitProof(uint256, uint256) nonpayable returns()
+
+// storage
+#define constant _PROOF_SUBMITTED = FREE_STORAGE_POINTER()      // 0
+#define constant _COMMITMENTS = FREE_STORAGE_POINTER()          // 1
+#define constant _PROOF_WAIT = FREE_STORAGE_POINTER()           // 2
+
+// ERRORS
+#define error TooEarly()
+#define error Mismatch()
+#define error ProofAlreadySubmitted()
+#define error InvalidProof()
+#define error TransferFailed()
+
+/// @notice Main Function Dispatcher
+#define macro MAIN() = takes (0) returns (0) {
+  // get the function signature
+  0x00                                                      // [0x00]
+  calldataload                                              // [calldata]
+  0xe0                                                      // [0xe0, calldata]
+  shr                                                       // [left_padded_function_selector]
+
+  dup1 __FUNC_SIG(register) eq _register jumpi              // [left_padded_function_selector]
+  dup1 __FUNC_SIG(submitProof) eq submit_proof jumpi        // [left_padded_function_selector]
+
+  // Bubble up to parent macro
+  no_match jump
+
+  _register:
+      pop
+      REGISTER()
+  submit_proof:
+      pop
+      SUBMIT_PROOF()
+
+  no_match:
+    0x00 0x00 revert
+}
+
+#define macro REGISTER() = takes(0) returns(0) {
+    // commitments[msg.sender] = calldata(0x04 - 0x24)
+    [_COMMITMENTS]                   // [1]
+    caller                           // [msg.sender, 1]
+    GET_MAPPING_SLOT_OF_KEY()        // [slot]
+    0x04 calldataload                // [commitment, slot]
+    swap1 sstore                     // []
+
+    // proofWait[msg.sender] = timestamp + 120
+    [_PROOF_WAIT]                    // [2]
+    caller                           // [msg.sender, 2]
+    GET_MAPPING_SLOT_OF_KEY()        // [slot]
+    timestamp 0x78 add               // [proofWait, slot]
+    swap1 sstore                     // []
+
+    stop
+}
+
+#define macro SUBMIT_PROOF() = takes(0) returns(0) {
+    // require(block.timestamp > proofwait[msg.sender])
+    [_PROOF_WAIT]                    // [2]
+    caller                           // [msg.sender, 2]
+    GET_MAPPING_SLOT_OF_KEY()        // [slot]
+    sload timestamp                  // [time, proofwait]
+    gt iszero too_early jumpi        // []
+
+    // require(commitment[msg.sender == kecccak256(abi.encodepacked(msg.sender, _proof, _randomsalt])
+    // get commitment
+    [_COMMITMENTS]                   // [1]
+    caller                           // [msg.sender, 1]
+    GET_MAPPING_SLOT_OF_KEY()        // [slot]
+    sload                            // [commitment]
+
+    // get sender's commitment
+    // abi.encodePacked
+    caller 0x00 mstore                  // [commitment]
+    0x04 calldataload                   // [proof, commitment]
+    0x14 mstore                         // [commitment]
+    0x24 calldataload                   // [randomsalt, commitment]
+    0x34 mstore                         // [commitment]
+
+    // keccak256
+    0x54 0x00 sha3                      // [expectedCommitment, commitment]
+    eq iszero mismatch jumpi            // []
+
+    // require (!proofsubmitted[proof])
+    [_PROOF_SUBMITTED]                  // [0]
+    0x04 calldataload                   // [proof, 0]
+    GET_MAPPING_SLOT_OF_KEY() dup1      // [slot, slot]
+    sload                               // [proofsubmitted?, slot]
+    proof_already_submitted jumpi       // [slot]
+
+
+
+    // require(proof % 13 == 0)
+    0xd                                 // [13, slot]
+    0x04 calldataload                   // [proof, 13, slot]
+    mod invalid_proof jumpi             // [slot]
+
+
+    // proofsubmitted[proof] = true
+    0x01 swap1 sstore                   // []
+
+
+    // (bool success, ) = payable(msg.sender).call{value: 1 ether}("");
+    // require(success)
+    returndatasize returndatasize           // [out, outsize]
+    returndatasize returndatasize           // [in, insize, out, outsize]
+    0xde0b6b3a7640000                       // [1 ether, in, insize, out, outsize]
+    caller                                  // [msg.sender, 1 ether, in, insize, out, outsize]
+    gas                                     // [gasleft, msg.sender, 1 ether, in, insize, out, outsize]
+    call                                    // [0/1]
+    iszero transfer_failed jumpi            // []
+
+    stop
+
+
+    too_early:
+        0x085de62500000000000000000000000000000000000000000000000000000000
+        0x00 mstore
+        0x04 0x00 revert
+    mismatch:
+        0x77a93d8d00000000000000000000000000000000000000000000000000000000
+        0x00 mstore
+        0x04 0x00 revert
+    proof_already_submitted:
+        0x3e77430d00000000000000000000000000000000000000000000000000000000
+        0x00 mstore
+        0x04 0x00 revert
+    invalid_proof:
+        0x09bde33900000000000000000000000000000000000000000000000000000000
+        0x00 mstore
+        0x04 0x00 revert
+    transfer_failed:
+        0x90b8ec1800000000000000000000000000000000000000000000000000000000
+        0x00 mstore
+        0x04 0x00 revert
+}
+
+#define macro GET_MAPPING_SLOT_OF_KEY() = takes(2) returns(1) {
+    // expects stack arrangement of [key, slot, ...]
+
+    0x00 mstore                     // [slot, ...]
+    0x20 mstore                     // [...]
+    sha3                            // [keysSlot, ...]
+}
