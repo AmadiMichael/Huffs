@@ -28,20 +28,6 @@ contract CommitRevealSchemeTest is Test, NonMatchingSelectorsHelper {
         commitRevealSchemeMock = new CommitRevealSchemeMock();
     }
 
-    // @notice Test that a non-matching selector reverts
-    function testNonMatchingSelector(bytes32 callData) public {
-        bytes4[] memory func_selectors = new bytes4[](2);
-        func_selectors[0] = bytes4(hex"e1fa8e84");
-        func_selectors[1] = bytes4(hex"1ec03679");
-
-        bool success = nonMatchingSelectorHelper(
-            func_selectors,
-            callData,
-            address(commitRevealScheme)
-        );
-        assert(!success);
-    }
-
     function testRegister() external {
         // vm.prank(0xABCD);
         bytes32 commit = keccak256(

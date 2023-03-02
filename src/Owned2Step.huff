@@ -4,10 +4,6 @@
 /// @notice A 2 step single owner authorization module
 
 
-// Imports
-// #include "./utils/NonPayable.huff"
-
-
 // Interface
 #define function transferOwnership(address) nonpayable returns ()
 #define function acceptOwnership() nonpayable returns ()

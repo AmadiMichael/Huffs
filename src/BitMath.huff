@@ -4,9 +4,7 @@
 /// @notice This library provides functionality for computing bit properties of an unsigned integer. 
 /// @notice Adapted from <https://github.com/Uniswap/v3-core/blob/main/contracts/libraries/BitMath.sol>
 
-
-// Imports
-// #include "./utils/NonPayable.huff"
+#include "huffmate/math/SafeMath.huff"
 
 
 // interface

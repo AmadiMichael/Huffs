@@ -3,6 +3,7 @@
 /// @author michaels <https://github.com/amadimichael>
 /// @notice This library provides functionality for computing the greatest common divisor of 2 unsigned integers using euclideans algorithm.
 
+#include "huffmate/math/SafeMath.huff"
 
 //interface
 #define function gcd(uint256, uint256) nonpayable returns(uint256)
@@ -18,7 +19,7 @@
     loopStart:
         dup1                                // [cache_modulus, modulus, divisor]
         swap2                               // [divisor, modulus, cache_modulus]
-        mod                                 // [new_modulus, new_divisor]  cache_modulus becomes new divisor
+        SAFE_MOD()                                 // [new_modulus, new_divisor]  cache_modulus becomes new divisor
 
         // if new_modulus is 0 use cache_modulus (now new_divisor) as gcd
         dup1 iszero                         // [0/1, new_modulus, new_divisor] 

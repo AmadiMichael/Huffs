@@ -3,6 +3,9 @@
 /// @author michaels <https://github.com/amadimichael>
 /// @notice 
 
+#include "huffmate/math/SafeMath.huff"
+
+
 // Interface
 #define function register(bytes32) nonpayable returns()
 #define function submitProof(uint256, uint256) nonpayable returns()
@@ -56,7 +59,7 @@
     [_PROOF_WAIT]                                           // [2]
     caller                                                  // [msg.sender, 2]
     GET_MAPPING_SLOT_OF_KEY()                               // [slot]
-    timestamp 0x78 add                                      // [proofWait, slot]
+    timestamp 0x78 SAFE_ADD()                                      // [proofWait, slot]
     swap1 sstore                                            // []
 
     stop
@@ -102,7 +105,7 @@
     // require(proof % 13 == 0)
     0xd                                                     // [13, slot]
     0x04 calldataload                                       // [proof, 13, slot]
-    mod invalid_proof jumpi                                 // [slot]
+    SAFE_MOD() invalid_proof jumpi                                 // [slot]
 
 
     // proofsubmitted[proof] = true

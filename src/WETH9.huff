@@ -3,9 +3,7 @@
 /// @author michaels <https://github.com/amadimichael>
 /// @notice Wrapped Ether implementation in Huff
 
-
-// Imports
-#include "./utils/NonPayable.huff"
+#include "huffmate/math/SafeMath.huff"
 
 // Interface
 #define function name() nonpayable returns(string)
@@ -24,11 +22,12 @@
 #define function transferFrom(address, address, uint256) nonpayable returns(bool)
 
 
-// storage
+// constants
 #define constant _NAME = 0x577261707065642045746865720000000000000000000000000000000000001a   // 0
 #define constant _SYMBOL = 0x5745544800000000000000000000000000000000000000000000000000000008    // 1
 #define constant _DECIMALS = 0x12   // 2
 
+// storage
 #define constant _BALANCEOF = FREE_STORAGE_POINTER()    // 3
 #define constant _ALLOWANCE = FREE_STORAGE_POINTER()   // 4
 
@@ -155,7 +154,7 @@
     gt revert_insufficientAllowance jumpi       // [allowance, approvalSlot]
 
     0x44 calldataload dup1                  // [wad, wad, allowance, approvalSlot]
-    swap2 sub                               // [newAllowance, wad, approvalSlot]
+    swap2 SAFE_SUB()                               // [newAllowance, wad, approvalSlot]
     dup3 sstore                             // [wad, approvalSlot]
 
     0x04 calldataload                       // [caller, wad, approvalSlot]
@@ -187,7 +186,7 @@
         swap2 swap1                                      // [wad, bal, wad, bal, slot]
         gt revert_insufficientBalance jumpi              // [wad, bal, slot]          
         
-        dup1 swap2 sub                                    // [newBal, wad, slot]
+        dup1 swap2 SAFE_SUB()                                    // [newBal, wad, slot]
         dup3 sstore dup1                                    // [wad, wad, slot]
 
         returndatasize returndatasize                       // [0x00, 0x00, wad, wad, slot]
@@ -322,7 +321,7 @@
     dup3 dup2 dup5                      // [val, balance, val, balance, balSlot, val]
     gt revert_insufficientBalance jumpi           // [val, balance, balSlot, val]
 
-    swap1 sub                           // [newBalance, balSlot, val]
+    swap1 SAFE_SUB()                           // [newBalance, balSlot, val]
     swap1 sstore                        // [val]
     continue jump
 
@@ -339,7 +338,7 @@
     // expects stack of [user, val]
     GET_USER_BALANCE_SLOT() dup1        // [balSlot, balSlot, val]
     sload                               // [balance, balSlot, val]
-    dup3 add                            // [newBalance, balSlot, val]
+    dup3 SAFE_ADD()                            // [newBalance, balSlot, val]
 
     swap1 sstore
 
