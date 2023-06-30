@@ -4,7 +4,6 @@ pragma solidity ^0.8.16;
 import {Test} from "forge-std/Test.sol";
 import {HuffConfig} from "foundry-huff/HuffConfig.sol";
 import {HuffDeployer} from "foundry-huff/HuffDeployer.sol";
-import "forge-std/console.sol";
 
 // TO-DO:= WETH TESTS
 interface WETH9 {
