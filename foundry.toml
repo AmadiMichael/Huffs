@@ -3,6 +3,7 @@ src = 'src'
 out = 'out'
 libs = ['lib']
 ffi = true
+evm_version = "shanghai"
 # solc = "0.5.16"
 
 fs_permissions = [
